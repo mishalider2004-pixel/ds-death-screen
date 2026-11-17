@@ -1,0 +1,18 @@
+{
+  "id": "ds-death-screen",
+  "title": "Dark Souls Death Screen",
+  "description": "Экран смерти в стиле Dark Souls: плавная картинка и звук при смерти персонажа.",
+  "version": "1.0.0",
+  "authors": [{ "name": "DS Death Screen" }],
+  "url": "https://github.com/mishalider2004-pixel/ds-death-screen",
+  "manifest": "https://github.com/mishalider2004-pixel/ds-death-screen/releases/latest/download/module.json",
+  "download": "https://github.com/mishalider2004-pixel/ds-death-screen/releases/download/v1.0.0/ds-death-screen.zip",
+  "compatibility": { "minimum": "13", "verified": "13.351", "maximum": "13" },
+  "esmodules": ["scripts/main.js"],
+  "styles": ["styles/ds-death-screen.css"],
+  "languages": [
+    { "lang": "ru", "name": "Русский", "path": "lang/ru.json" },
+    { "lang": "en", "name": "English", "path": "lang/en.json" }
+  ],
+  "socket": true
+}

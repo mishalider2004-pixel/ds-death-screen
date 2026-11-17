@@ -1,0 +1,65 @@
+﻿#ds-death-overlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  z-index: 100000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#ds-death-overlay img {
+  display: block;
+  flex: none;
+  width: 100vw;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  object-fit: fill;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ds-death-settings-app .ds-death-settings { padding-right: 4px; }
+.ds-death-settings-app .ds-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ds-death-settings-app .ds-image-card {
+  border: 1px solid var(--color-border-light-tertiary, #7a7971);
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+  background: var(--color-cool-5-90, rgba(0, 0, 0, .2));
+}
+.ds-death-settings-app .ds-image-card img {
+  width: 100%;
+  height: 80px;
+  object-fit: contain;
+  background: #000;
+  border: none;
+}
+.ds-death-settings-app .ds-image-card .ds-radio {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.ds-death-settings-app .ds-image-card .ds-radio input { margin: 0; }
+.ds-death-settings-app .ds-image-card button { margin: 0; }
+
