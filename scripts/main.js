@@ -233,10 +233,11 @@ function playLocal(cfg) {
   }, imageDelay);
 }
 
-/** Показывает экран у всех (картинка выбирается один раз, у отправителя). */
+/** Показывает экран указанным пользователям (или всем, если targetUsers не задан). */
 function trigger(overrides = {}) {
-  const cfg = { ...getConfig(), ...overrides };
-  cfg.image = overrides.image ?? pickImage(cfg);
+  const { targetUsers = null, ...rest } = overrides;
+  const cfg = { ...getConfig(), ...rest };
+  cfg.image = rest.image ?? pickImage(cfg);
   if (!cfg.image) {
     ui.notifications.warn(game.i18n.localize("DSDS.Settings.NoImageWarn"));
     return;
@@ -245,8 +246,10 @@ function trigger(overrides = {}) {
     image: cfg.image, sound: cfg.sound, volume: cfg.volume,
     fadeIn: cfg.fadeIn, hold: cfg.hold, fadeOut: cfg.fadeOut, offset: cfg.offset
   };
-  game.socket.emit(SOCKET, { type: "play", payload });
-  playLocal(payload);
+  game.socket.emit(SOCKET, { type: "play", payload, targetUsers });
+  if (!Array.isArray(targetUsers) || targetUsers.includes(game.user.id)) {
+    playLocal(payload);
+  }
 }
 
 /* -------------------------------------------- */
@@ -287,6 +290,13 @@ async function enableForPlayerActors() {
   for (const actor of actors) await actor.setFlag(MODULE_ID, "enabled", true);
 }
 
+/** Возвращает ID пользователей, которым нужно показать экран смерти для этого актёра. */
+function getTargetUserIds(actor) {
+  const playerOwners = game.users.filter((u) => !u.isGM && actor.testUserPermission(u, "OWNER"));
+  if (playerOwners.length) return playerOwners.map((u) => u.id);
+  return game.users.filter((u) => u.isGM).map((u) => u.id);
+}
+
 const lastTriggered = new Map();
 
 function tryTrigger(actor) {
@@ -295,7 +305,7 @@ function tryTrigger(actor) {
   const now = Date.now();
   if (now - (lastTriggered.get(key) ?? 0) < COOLDOWN_MS) return; // защита от двойного срабатывания
   lastTriggered.set(key, now);
-  trigger();
+  trigger({ targetUsers: getTargetUserIds(actor) });
 }
 
 /* -------------------------------------------- */
@@ -316,7 +326,9 @@ Hooks.once("init", registerSettings);
 
 Hooks.once("ready", () => {
   game.socket.on(SOCKET, (data) => {
-    if (data?.type === "play" && data.payload) playLocal(data.payload);
+    if (data?.type !== "play" || !data.payload) return;
+    if (Array.isArray(data.targetUsers) && !data.targetUsers.includes(game.user.id)) return;
+    playLocal(data.payload);
   });
   const api = { trigger, test: trigger, isDead, isEnabled };
   game.modules.get(MODULE_ID).api = api;
