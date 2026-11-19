@@ -9,6 +9,10 @@
   "DSDS.Settings.General": "Общие",
   "DSDS.Settings.AutoEnable": "Включить у всех игроков",
   "DSDS.Settings.AutoEnableHint": "После сохранения экран смерти включится у всех персонажей, которыми владеют игроки, а также у новых создаваемых персонажей игроков.",
+  "DSDS.Settings.DeathCondition": "Условие срабатывания",
+  "DSDS.Settings.DeathConditionHpZero": "При падении ХП до 0",
+  "DSDS.Settings.DeathConditionFinal": "При окончательной смерти (провал спасбросков или статус «Мёртв»)",
+  "DSDS.Settings.DeathConditionHint": "В режиме окончательной смерти экран появится после 3 провалов спасбросков от смерти (или при получении статуса «Мёртв»). Для существ и систем без спасбросков — при падении ХП до 0.",
   "DSDS.Settings.Images": "Картинки",
   "DSDS.Settings.AddImage": "Добавить картинку",
   "DSDS.Settings.NoImages": "Список пуст. Добавьте хотя бы одну картинку.",
@@ -30,5 +34,13 @@
   "DSDS.Settings.Test": "Тест экрана смерти",
   "DSDS.Settings.Save": "Сохранить",
   "DSDS.Settings.Saved": "Настройки экрана смерти сохранены.",
-  "DSDS.Settings.NoImageWarn": "Нет картинки для показа. Добавьте её в настройках."
+  "DSDS.Settings.NoImageWarn": "Нет картинки для показа. Добавьте её в настройках.",
+  "DSDS.Settings.SpecialTriggers": "Особые триггеры",
+  "DSDS.Settings.OneshotEnabled": "Отдельный экран при ваншоте",
+  "DSDS.Settings.OneshotHint": "Срабатывает, если персонажа с полными ХП убили за один удар (до 0 ХП) или если остаток урона после падения до 0 ХП не меньше максимума ХП (мгновенная смерть по правилам D&D 5e).",
+  "DSDS.Settings.OneshotImage": "Картинка при ваншоте",
+  "DSDS.Settings.OneshotImagePlaceholder": "Оставьте пустым для основной картинки",
+  "DSDS.Settings.OneshotSound": "Звук при ваншоте",
+  "DSDS.Settings.OneshotSoundPlaceholder": "Оставьте пустым для основного звука",
+  "DSDS.Settings.OneshotTest": "Проверить экран ваншота"
 }

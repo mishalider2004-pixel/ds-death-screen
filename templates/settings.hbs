@@ -8,6 +8,17 @@
       </div>
       <p class="hint">{{localize "DSDS.Settings.AutoEnableHint"}}</p>
     </div>
+
+    <div class="form-group">
+      <label>{{localize "DSDS.Settings.DeathCondition"}}</label>
+      <div class="form-fields">
+        <select name="deathCondition">
+          <option value="hpZero" {{#if deathConditionHpZero}}selected{{/if}}>{{localize "DSDS.Settings.DeathConditionHpZero"}}</option>
+          <option value="finalDeath" {{#unless deathConditionHpZero}}selected{{/unless}}>{{localize "DSDS.Settings.DeathConditionFinal"}}</option>
+        </select>
+      </div>
+      <p class="hint">{{localize "DSDS.Settings.DeathConditionHint"}}</p>
+    </div>
   </fieldset>
 
   <fieldset>
@@ -91,6 +102,41 @@
       <label>{{localize "DSDS.Settings.Offset"}}</label>
       <div class="form-fields"><input type="number" name="offset" value="{{offset}}" step="50"></div>
       <p class="hint">{{localize "DSDS.Settings.OffsetHint"}}</p>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "DSDS.Settings.SpecialTriggers"}}</legend>
+
+    <div class="form-group">
+      <label>{{localize "DSDS.Settings.OneshotEnabled"}}</label>
+      <div class="form-fields">
+        <input type="checkbox" name="oneshotEnabled" {{#if oneshotEnabled}}checked{{/if}}>
+      </div>
+      <p class="hint">{{localize "DSDS.Settings.OneshotHint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "DSDS.Settings.OneshotImage"}}</label>
+      <div class="form-fields">
+        <input type="text" name="oneshotImage" value="{{oneshotImage}}" placeholder="{{localize 'DSDS.Settings.OneshotImagePlaceholder'}}">
+        <button type="button" class="icon fa-solid fa-image" data-action="pickOneshotImage" data-tooltip="{{localize 'DSDS.Settings.Browse'}}" aria-label="{{localize 'DSDS.Settings.Browse'}}"></button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "DSDS.Settings.OneshotSound"}}</label>
+      <div class="form-fields">
+        <input type="text" name="oneshotSound" value="{{oneshotSound}}" placeholder="{{localize 'DSDS.Settings.OneshotSoundPlaceholder'}}">
+        <button type="button" class="icon fa-solid fa-file-audio" data-action="pickOneshotSound" data-tooltip="{{localize 'DSDS.Settings.Browse'}}" aria-label="{{localize 'DSDS.Settings.Browse'}}"></button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label></label>
+      <div class="form-fields">
+        <button type="button" data-action="testOneshot"><i class="fa-solid fa-skull-crossbones"></i> {{localize "DSDS.Settings.OneshotTest"}}</button>
+      </div>
     </div>
   </fieldset>
 </section>

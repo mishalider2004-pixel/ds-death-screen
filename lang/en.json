@@ -9,6 +9,10 @@
   "DSDS.Settings.General": "General",
   "DSDS.Settings.AutoEnable": "Enable for all players",
   "DSDS.Settings.AutoEnableHint": "On save, the death screen is enabled for every player-owned character, and for newly created player characters.",
+  "DSDS.Settings.DeathCondition": "Trigger condition",
+  "DSDS.Settings.DeathConditionHpZero": "When HP drops to 0",
+  "DSDS.Settings.DeathConditionFinal": "On final death (failed death saves or Dead status)",
+  "DSDS.Settings.DeathConditionHint": "In final death mode, the screen triggers after 3 failed death saves (or when the Dead status is applied). For actors and systems without death saves, it triggers at 0 HP.",
   "DSDS.Settings.Images": "Images",
   "DSDS.Settings.AddImage": "Add image",
   "DSDS.Settings.NoImages": "The list is empty. Add at least one image.",
@@ -30,5 +34,13 @@
   "DSDS.Settings.Test": "Test death screen",
   "DSDS.Settings.Save": "Save",
   "DSDS.Settings.Saved": "Death screen settings saved.",
-  "DSDS.Settings.NoImageWarn": "No image to show. Add one in the settings."
+  "DSDS.Settings.NoImageWarn": "No image to show. Add one in the settings.",
+  "DSDS.Settings.SpecialTriggers": "Special triggers",
+  "DSDS.Settings.OneshotEnabled": "Separate screen on one-shot",
+  "DSDS.Settings.OneshotHint": "Triggers if a character at full HP is dropped to 0 HP in a single hit, or if excess damage past 0 HP equals or exceeds max HP (instant death in D&D 5e).",
+  "DSDS.Settings.OneshotImage": "One-shot image",
+  "DSDS.Settings.OneshotImagePlaceholder": "Leave empty to use default image",
+  "DSDS.Settings.OneshotSound": "One-shot sound",
+  "DSDS.Settings.OneshotSoundPlaceholder": "Leave empty to use default sound",
+  "DSDS.Settings.OneshotTest": "Test one-shot screen"
 }

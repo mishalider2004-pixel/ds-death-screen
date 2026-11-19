@@ -26,7 +26,11 @@ function getConfig() {
     hold: g("hold"),
     fadeOut: g("fadeOut"),
     offset: g("offset"),
-    autoEnable: g("autoEnable")
+    autoEnable: g("autoEnable"),
+    deathCondition: g("deathCondition"),
+    oneshotEnabled: g("oneshotEnabled"),
+    oneshotImage: g("oneshotImage"),
+    oneshotSound: g("oneshotSound")
   };
 }
 
@@ -44,6 +48,10 @@ function registerSettings() {
   world("fadeOut", Number, 2000);
   world("offset", Number, 0);
   world("autoEnable", Boolean, false);
+  world("deathCondition", String, "hpZero");
+  world("oneshotEnabled", Boolean, false);
+  world("oneshotImage", String, "");
+  world("oneshotSound", String, "");
 
   game.settings.registerMenu(MODULE_ID, "menu", {
     name: "DSDS.Menu.Name",
@@ -75,6 +83,9 @@ class DeathScreenSettings extends HandlebarsApplicationMixin(ApplicationV2) {
       addImage: DeathScreenSettings.#onAddImage,
       removeImage: DeathScreenSettings.#onRemoveImage,
       pickSound: DeathScreenSettings.#onPickSound,
+      pickOneshotImage: DeathScreenSettings.#onPickOneshotImage,
+      pickOneshotSound: DeathScreenSettings.#onPickOneshotSound,
+      testOneshot: DeathScreenSettings.#onTestOneshot,
       test: DeathScreenSettings.#onTest
     }
   };
@@ -100,7 +111,11 @@ class DeathScreenSettings extends HandlebarsApplicationMixin(ApplicationV2) {
       hold: s.hold,
       fadeOut: s.fadeOut,
       offset: s.offset,
-      autoEnable: s.autoEnable
+      autoEnable: s.autoEnable,
+      deathConditionHpZero: s.deathCondition !== "finalDeath",
+      oneshotEnabled: s.oneshotEnabled,
+      oneshotImage: s.oneshotImage,
+      oneshotSound: s.oneshotSound
     };
   }
 
@@ -118,6 +133,10 @@ class DeathScreenSettings extends HandlebarsApplicationMixin(ApplicationV2) {
     s.fadeOut = Math.max(0, Number(data.fadeOut ?? s.fadeOut) || 0);
     s.offset = Number(data.offset ?? s.offset) || 0;
     s.autoEnable = !!(data.autoEnable ?? false);
+    s.deathCondition = data.deathCondition ?? s.deathCondition;
+    s.oneshotEnabled = !!(data.oneshotEnabled ?? false);
+    s.oneshotImage = (data.oneshotImage ?? s.oneshotImage ?? "").trim();
+    s.oneshotSound = (data.oneshotSound ?? s.oneshotSound ?? "").trim();
   }
 
   static #pickFile(type, callback, current = "") {
@@ -152,6 +171,31 @@ class DeathScreenSettings extends HandlebarsApplicationMixin(ApplicationV2) {
     }, this.draft.sound);
   }
 
+  static #onPickOneshotImage() {
+    this.#syncFromForm();
+    DeathScreenSettings.#pickFile("image", (path) => {
+      if (!path) return;
+      this.draft.oneshotImage = path;
+      this.render();
+    }, this.draft.oneshotImage);
+  }
+
+  static #onPickOneshotSound() {
+    this.#syncFromForm();
+    DeathScreenSettings.#pickFile("audio", (path) => {
+      if (!path) return;
+      this.draft.oneshotSound = path;
+      this.render();
+    }, this.draft.oneshotSound);
+  }
+
+  static #onTestOneshot() {
+    this.#syncFromForm();
+    const image = this.draft.oneshotImage || pickImage(this.draft);
+    if (!image) return ui.notifications.warn(game.i18n.localize("DSDS.Settings.NoImageWarn"));
+    playLocal({ ...this.draft, image, sound: this.draft.oneshotSound || this.draft.sound });
+  }
+
   static #onTest() {
     this.#syncFromForm();
     const image = pickImage(this.draft);
@@ -173,7 +217,11 @@ class DeathScreenSettings extends HandlebarsApplicationMixin(ApplicationV2) {
       set("hold", s.hold),
       set("fadeOut", s.fadeOut),
       set("offset", s.offset),
-      set("autoEnable", s.autoEnable)
+      set("autoEnable", s.autoEnable),
+      set("deathCondition", s.deathCondition),
+      set("oneshotEnabled", s.oneshotEnabled),
+      set("oneshotImage", s.oneshotImage),
+      set("oneshotSound", s.oneshotSound)
     ]);
     if (s.autoEnable) await enableForPlayerActors();
     ui.notifications.info(game.i18n.localize("DSDS.Settings.Saved"));
@@ -260,27 +308,52 @@ function isEnabled(actor) {
   return !!actor?.getFlag(MODULE_ID, "enabled");
 }
 
-/** Возвращает true, если по данным системы актёр "мёртв". */
-function isDead(actor) {
-  if (!actor) return false;
-  if (actor.statuses?.has("dead")) return true;
+/** Собирает снимок здоровья и статуса смерти актёра для разных игровых систем. */
+function getVitalsSnapshot(actor) {
+  if (!actor) return { hpValue: 0, hpMax: 0, isHpZero: false, isFinalDeath: false, hasDeathSaves: false, deathFailures: 0 };
+  const hasDeadStatus = !!actor.statuses?.has("dead");
   const sys = actor.system ?? {};
+
+  let hpValue = 0;
+  let hpMax = 0;
 
   // dnd5e и n5eb: system.attributes.hp
   const hp = sys.attributes?.hp;
-  if (hp && typeof hp.value === "number") return hp.value <= 0 && (hp.max ?? 1) > 0;
-
-  // wod5e: system.health { max, superficial, aggravated }
-  const h = sys.health;
-  if (h && typeof h.max === "number" && h.max > 0
-    && (typeof h.superficial === "number" || typeof h.aggravated === "number")) {
-    return ((h.superficial ?? 0) + (h.aggravated ?? 0)) >= h.max;
+  if (hp && typeof hp.value === "number") {
+    hpValue = hp.value;
+    hpMax = hp.effectiveMax ?? hp.max ?? 0;
+  } else {
+    // wod5e: system.health { max, superficial, aggravated }
+    const h = sys.health;
+    if (h && typeof h.max === "number" && h.max > 0
+      && (typeof h.superficial === "number" || typeof h.aggravated === "number")) {
+      const dmg = (h.superficial ?? 0) + (h.aggravated ?? 0);
+      hpMax = h.max;
+      hpValue = Math.max(0, h.max - dmg);
+    } else if (h && typeof h.value === "number" && typeof h.max === "number") {
+      hpValue = h.value;
+      hpMax = h.max;
+    } else if (sys.hp && typeof sys.hp.value === "number") {
+      hpValue = sys.hp.value;
+      hpMax = sys.hp.max ?? 1;
+    }
   }
 
-  // Прочие системы: простое поле health.value / hp.value
-  if (h && typeof h.value === "number" && typeof h.max === "number" && h.max > 0) return h.value <= 0;
-  if (sys.hp && typeof sys.hp.value === "number" && (sys.hp.max ?? 1) > 0) return sys.hp.value <= 0;
-  return false;
+  const death = sys.attributes?.death;
+  const hasDeathSaves = !!death && typeof death.failure === "number";
+  const deathFailures = hasDeathSaves ? death.failure : 0;
+
+  const isHpZero = hasDeadStatus || (hpMax > 0 && hpValue <= 0);
+  const isFinalDeath = hasDeadStatus || (hasDeathSaves ? (hpValue <= 0 && deathFailures >= 3) : isHpZero);
+
+  return { hpValue, hpMax, isHpZero, isFinalDeath, hasDeathSaves, deathFailures };
+}
+
+/** Возвращает true, если по выбранному в настройках условию актёр считается "мёртвым". */
+function isDead(actor, condition = game.settings.get(MODULE_ID, "deathCondition")) {
+  if (!actor) return false;
+  const snap = getVitalsSnapshot(actor);
+  return condition === "finalDeath" ? snap.isFinalDeath : snap.isHpZero;
 }
 
 /** Включает флаг у всех актёров, которыми владеют игроки (не мастера). Только мастер. */
@@ -298,14 +371,38 @@ function getTargetUserIds(actor) {
 }
 
 const lastTriggered = new Map();
+const pendingMassiveDamage = new Map();
+const MASSIVE_TTL_MS = 2000;
 
-function tryTrigger(actor) {
+function onPreApplyDamage(actor, amount) {
+  if (!(actor instanceof Actor) || !(amount > 0)) return;
+  const hp = actor.system?.attributes?.hp;
+  if (!hp || typeof hp.value !== "number") return;
+  const hpMax = hp.effectiveMax ?? hp.max ?? 0;
+  if (hpMax <= 0) return;
+  const totalPool = hp.value + (hp.temp ?? 0);
+  const remaining = amount - totalPool;
+  if (remaining >= hpMax) pendingMassiveDamage.set(actor.uuid, Date.now());
+}
+
+function consumeMassiveDamage(actor) {
+  const ts = pendingMassiveDamage.get(actor.uuid);
+  if (!ts) return false;
+  pendingMassiveDamage.delete(actor.uuid);
+  return (Date.now() - ts) < MASSIVE_TTL_MS;
+}
+
+function isFullToZeroOneshot(prev, curr) {
+  return prev.hpMax > 0 && prev.hpValue >= prev.hpMax && curr.hpValue <= 0;
+}
+
+function tryTrigger(actor, overrides = {}) {
   if (!isEnabled(actor)) return;
   const key = actor.uuid;
   const now = Date.now();
   if (now - (lastTriggered.get(key) ?? 0) < COOLDOWN_MS) return; // защита от двойного срабатывания
   lastTriggered.set(key, now);
-  trigger({ targetUsers: getTargetUserIds(actor) });
+  trigger({ targetUsers: getTargetUserIds(actor), ...overrides });
 }
 
 /* -------------------------------------------- */
@@ -366,16 +463,36 @@ Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
   });
 });
 
-// Смерть по HP: запоминаем состояние до обновления и сравниваем после
+// Отслеживание массивного урона в dnd5e / n5eb (правило мгновенной смерти)
+Hooks.on("dnd5e.preApplyDamage", onPreApplyDamage);
+Hooks.on("n5eb.preApplyDamage", onPreApplyDamage);
+
+// Смерть и ваншоты: запоминаем состояние до обновления и сравниваем после
 Hooks.on("preUpdateActor", (actor, changes, options, userId) => {
   if (userId !== game.user.id) return;
-  options.dsWasDead = isDead(actor);
+  options.dsPrev = getVitalsSnapshot(actor);
 });
 
 Hooks.on("updateActor", (actor, changes, options, userId) => {
   if (userId !== game.user.id) return; // срабатывает только у того, кто сделал изменение
-  if (options.dsWasDead === undefined || options.dsWasDead) return;
-  if (isDead(actor)) tryTrigger(actor);
+  const prev = options.dsPrev;
+  if (!prev) return;
+
+  const curr = getVitalsSnapshot(actor);
+  const cfg = getConfig();
+  const isMassive = consumeMassiveDamage(actor);
+
+  if (cfg.oneshotEnabled && (isMassive || isFullToZeroOneshot(prev, curr))) {
+    tryTrigger(actor, {
+      image: cfg.oneshotImage || undefined,
+      sound: cfg.oneshotSound || cfg.sound
+    });
+    return;
+  }
+
+  const wasDead = cfg.deathCondition === "finalDeath" ? prev.isFinalDeath : prev.isHpZero;
+  const nowDead = cfg.deathCondition === "finalDeath" ? curr.isFinalDeath : curr.isHpZero;
+  if (!wasDead && nowDead) tryTrigger(actor);
 });
 
 // Смерть по статусу «dead»
